@@ -22,7 +22,7 @@ while getopts "b:s:f:h" opt; do
             case $OPTARG in 
                 mpv)
                     base_command() {
-                        xwinwrap -g $1 -d -ni -s -nf -b -un -ov -fdt -argb -o 1.0 -debug -- mpv -wid WID --mute=yes --no-audio --no-osc --no-osd-bar --quiet --loop $2
+                        xwinwrap -g $1 -d -ni -s -nf -b -un -ov -fdt -argb -o 1.0 -debug -- mpv -wid WID --mute=yes --no-audio --no-osc --no-osd-bar --quiet --loop --hwdec=no --vo=xv --profile=sw-fast $2
                     }
 
                 ;;
