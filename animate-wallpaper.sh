@@ -57,7 +57,6 @@ while getopts "b:F:s:f:m:S:k:h" opt; do
         ;;
         m)
             MUSIC_TYPES+=",${OPTARG}"
-            echo $MUSIC_TYPES
         ;;
         S)
             SOURCE=$OPTARG
@@ -77,7 +76,6 @@ killall -q xwinwrap && killall -q xwinwrap
 
 music() {
     xwinwrap -g $1 -ni -s -nf -a -un -ov -fdt -argb -o 0 -d -- glava -m $2 -a $3
-    echo "xwinwrap -g $1 -ni -s -nf -a -un -ov -fdt -argb -o 0 -d -- glava -m $2 -a $3"
 }
 
 SCREEN_LIST=$(xrandr --query | grep " connected" | sed -r 's/primary//' | awk '{print $3}')
