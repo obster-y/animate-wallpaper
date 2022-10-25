@@ -7,22 +7,24 @@
 ###
 ### Options:
 ###   -b program   Select base program. mpv supports gifs and videos, others only support gifs.
-###   -s stretch   mpv and gifview doesn't support stretch, sxiv doesn't support `F'
+###   -F           Whether only first display output, if option added, no matter value, only first display
+###   -s STRETCH_MODE   mpv and gifview doesn't support STRETCH_MODE, sxiv doesn't support `F'
 ###                    [F]ill, [f]it, [d]own, [w]idth, [h]eight
 ###   -f filename  File absolute path
+###   -m vistype   GLava visual type
+###   -S source   Music visualization source "fifo"(default) or "pulseaudio"
+###   -k           Terminate all animate wallpapers
 ###   -h           Show this message.
 
-help() {
-    sed -rn 's/^### ?//;T;p;' "$0"
-}
+SOURCE="fifo"
 
-while getopts "b:s:f:h" opt; do
+while getopts "b:F:s:f:m:S:k:h" opt; do
     case $opt in
         b)
             case $OPTARG in 
                 mpv)
                     base_command() {
-                        xwinwrap -g $1 -d -ni -s -nf -b -un -ov -fdt -argb -o 1.0 -debug -- mpv -wid WID --mute=yes --no-audio --no-osc --no-osd-bar --quiet --loop --hwdec=no --vo=xv --profile=sw-fast $2
+                        xwinwrap -g $1 -d -ni -s -nf -b -un -ov -fdt -argb -debug -- mpv -wid WID --mute=yes --no-audio --no-osc --no-osd-bar --quiet --loop --hwdec=no --vo=xv --profile=sw-fast $2
                     }
 
                 ;;
@@ -44,23 +46,56 @@ while getopts "b:s:f:h" opt; do
                 ;;
             esac
         ;;
+        F)
+            ONLY_FIRST="1"
+        ;;        
         s)
-            stretch=$OPTARG
+            STRETCH_MODE=$OPTARG
         ;;
         f)
-            fname=$OPTARG
+            FILE_NAME=$OPTARG
+        ;;
+        m)
+            MUSIC_TYPES+=",${OPTARG}"
+            echo $MUSIC_TYPES
+        ;;
+        S)
+            SOURCE=$OPTARG
+        ;;
+        k)
+            killall -q xwinwrap && killall -q xwinwrap
+            exit 0
         ;;
         h)
-            help
+            sed -rn 's/^### ?//;T;p;' "$0"
             exit 0
         ;;
     esac
 done
 
-killall -q xwinwrap
-screens=$(xrandr --query | grep " connected" | sed -r 's/primary//' | awk '{print $3}')
+killall -q xwinwrap && killall -q xwinwrap
 
-for s in $screens; do
-    base_command $s $fname $stretch;
+music() {
+    xwinwrap -g $1 -ni -s -nf -a -un -ov -fdt -argb -o 0 -d -- glava -m $2 -a $3
+    echo "xwinwrap -g $1 -ni -s -nf -a -un -ov -fdt -argb -o 0 -d -- glava -m $2 -a $3"
+}
+
+SCREEN_LIST=$(xrandr --query | grep " connected" | sed -r 's/primary//' | awk '{print $3}')
+
+MUSIC_TYPES="${MUSIC_TYPES//,/ }"
+
+for var in $MUSIC_TYPES; do
+    music $(echo $SCREEN_LIST | cut -d ' ' -f 1) $var $SOURCE;
 done;
+
+sleep 0.2
+
+if [ -z $ONLY_FIRST ]; then
+    for s in $SCREEN_LIST; do
+        base_command $s $FILE_NAME $STRETCH_MODE;
+    done;
+else
+    base_command $(echo $SCREEN_LIST | cut -d ' ' -f 1) $FILE_NAME $STRETCH_MODE
+fi
+
 exit 0
